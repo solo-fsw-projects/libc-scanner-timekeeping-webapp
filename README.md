@@ -1,7 +1,7 @@
 # MRI Scanner Timekeeping Webapp
 A client-side dashboard for MRI scanner administrators to upload Outlook-exported ICS calendars, classify cancellations (on-time vs. late), and total usage per project for billing.
 
-Find the website here. 
+Find the website [here](https://solo-fsw-projects.github.io/libc-scanner-timekeeping-webapp/).
 
 Test data can be found in: `J:\departments\fsw\FAC\SOLO\Lab-support\015 GitHub Data\solo-fsw\libc-scanner-timekeeping-webapp.data`.
 
