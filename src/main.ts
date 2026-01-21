@@ -112,7 +112,7 @@ const template = `
       <p class="app-attribution">Built for the LIBC by the SOLO Research Support Team (Louise, Elio and Agentic AI ✨).</p>
       <p class="app-attribution">Faculty of Social and Behavioral Sciences, Leiden University</p>
       <p class="app-date"> January 2026.</p>
-      <p class="app-date">Source-code on <a href="https://github.com/solo-fsw/libc-scanner-timekeeping-webapp">GitHub</a></p>
+      <p class="app-date">Source-code on <a href="https://github.com/solo-fsw-projects/libc-scanner-timekeeping-webapp">GitHub</a></p>
     </footer>
   </div>
 `
