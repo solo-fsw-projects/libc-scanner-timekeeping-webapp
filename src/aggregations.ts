@@ -80,28 +80,33 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
 
 export function buildDatasetStats(events: Occurrence[], summaries: ProjectSummary[]): DatasetStats {
   const billableMinutes = summaries.reduce((acc, item) => acc + item.totalMinutes, 0)
-  const lateCancellationCount = events.filter((evt) => evt.classification === 'CANCELLED_LATE').length
   
-  // Calculate duration metrics per event type
-  const activeMinutes = events
-    .filter((evt) => evt.classification === 'ACTIVE')
-    .reduce((acc, evt) => acc + evt.durationMinutes, 0)
+  // Calculate duration metrics per event type in a single pass
+  let activeMinutes = 0
+  let cancelledOnTimeMinutes = 0
+  let cancelledLateMinutes = 0
+  let lateCancelledBillableMinutes = 0
+  let lateCancellationCount = 0
   
-  const cancelledOnTimeMinutes = events
-    .filter((evt) => evt.classification === 'CANCELLED_ON_TIME')
-    .reduce((acc, evt) => acc + evt.durationMinutes, 0)
-  
-  const cancelledLateMinutes = events
-    .filter((evt) => evt.classification === 'CANCELLED_LATE')
-    .reduce((acc, evt) => acc + evt.durationMinutes, 0)
+  events.forEach((evt) => {
+    switch (evt.classification) {
+      case 'ACTIVE':
+        activeMinutes += evt.durationMinutes
+        break
+      case 'CANCELLED_ON_TIME':
+        cancelledOnTimeMinutes += evt.durationMinutes
+        break
+      case 'CANCELLED_LATE':
+        cancelledLateMinutes += evt.durationMinutes
+        lateCancelledBillableMinutes += evt.billableMinutes
+        lateCancellationCount += 1
+        break
+    }
+  })
   
   // Calculate late cancellation coverage percentage
   // This is the percentage of late cancellation duration that was NOT billed
   // Late cancellations are typically billed, so the "coverage" is how much was forgiven
-  const lateCancelledBillableMinutes = events
-    .filter((evt) => evt.classification === 'CANCELLED_LATE')
-    .reduce((acc, evt) => acc + evt.billableMinutes, 0)
-  
   const lateCancellationNotBilledMinutes = cancelledLateMinutes - lateCancelledBillableMinutes
   const lateCancellationCoveragePercentage = 
     cancelledLateMinutes > 0 
