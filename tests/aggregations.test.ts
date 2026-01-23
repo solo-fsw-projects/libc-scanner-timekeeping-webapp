@@ -72,4 +72,112 @@ describe('buildDatasetStats', () => {
     expect(stats.lateCancellationCount).toBe(1)
     expect(stats.billableHours).toBeGreaterThan(0)
   })
+
+  // Validates that new duration metrics are calculated correctly per event type
+  it('calculates duration metrics per event type correctly', () => {
+    const events: Occurrence[] = [
+      makeOccurrence({
+        classification: 'ACTIVE',
+        start: new Date('2025-06-01T08:00:00Z'),
+        end: new Date('2025-06-01T10:00:00Z'), // 120 minutes
+        durationMinutes: 120,
+      }),
+      makeOccurrence({
+        classification: 'ACTIVE',
+        start: new Date('2025-06-02T08:00:00Z'),
+        end: new Date('2025-06-02T09:00:00Z'), // 60 minutes
+        durationMinutes: 60,
+      }),
+      makeOccurrence({
+        classification: 'CANCELLED_ON_TIME',
+        start: new Date('2025-06-03T08:00:00Z'),
+        end: new Date('2025-06-03T10:30:00Z'), // 150 minutes
+        durationMinutes: 150,
+      }),
+      makeOccurrence({
+        classification: 'CANCELLED_LATE',
+        start: new Date('2025-06-04T08:00:00Z'),
+        end: new Date('2025-06-04T09:30:00Z'), // 90 minutes
+        durationMinutes: 90,
+      }),
+    ]
+    const summaries = buildProjectSummaries(events)
+    const stats = buildDatasetStats(events, summaries)
+
+    // Active: 120 + 60 = 180 minutes = 3 hours
+    expect(stats.activeDurationHours).toBe(3)
+    
+    // Cancelled on time: 150 minutes = 2.5 hours
+    expect(stats.cancelledOnTimeDurationHours).toBe(2.5)
+    
+    // Cancelled late: 90 minutes = 1.5 hours
+    expect(stats.cancelledLateDurationHours).toBe(1.5)
+  })
+
+  // Validates late cancellation coverage percentage calculation
+  it('calculates late cancellation coverage percentage correctly', () => {
+    const events: Occurrence[] = [
+      makeOccurrence({
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 100,
+        billableMinutes: 100, // Fully billed
+      }),
+      makeOccurrence({
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 100,
+        billableMinutes: 50, // 50% billed, 50% forgiven
+      }),
+    ]
+    const summaries = buildProjectSummaries(events)
+    const stats = buildDatasetStats(events, summaries)
+
+    // Total late cancellation: 200 minutes
+    // Total billed: 150 minutes
+    // Not billed (coverage): 50 minutes
+    // Coverage percentage: 50/200 * 100 = 25%
+    expect(stats.lateCancellationCoveragePercentage).toBe(25)
+  })
+
+  // Validates coverage percentage is 0 when all late cancellations are fully billed
+  it('returns 0 coverage percentage when all late cancellations are fully billed', () => {
+    const events: Occurrence[] = [
+      makeOccurrence({
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 100,
+        billableMinutes: 100,
+      }),
+    ]
+    const summaries = buildProjectSummaries(events)
+    const stats = buildDatasetStats(events, summaries)
+
+    expect(stats.lateCancellationCoveragePercentage).toBe(0)
+  })
+
+  // Validates coverage percentage is 0 when there are no late cancellations
+  it('returns 0 coverage percentage when there are no late cancellations', () => {
+    const events: Occurrence[] = [
+      makeOccurrence({ classification: 'ACTIVE' }),
+      makeOccurrence({ classification: 'CANCELLED_ON_TIME' }),
+    ]
+    const summaries = buildProjectSummaries(events)
+    const stats = buildDatasetStats(events, summaries)
+
+    expect(stats.lateCancellationCoveragePercentage).toBe(0)
+    expect(stats.cancelledLateDurationHours).toBe(0)
+  })
+
+  // Validates coverage percentage is 100 when no late cancellations are billed
+  it('returns 100 coverage percentage when no late cancellations are billed', () => {
+    const events: Occurrence[] = [
+      makeOccurrence({
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 100,
+        billableMinutes: 0,
+      }),
+    ]
+    const summaries = buildProjectSummaries(events)
+    const stats = buildDatasetStats(events, summaries)
+
+    expect(stats.lateCancellationCoveragePercentage).toBe(100)
+  })
 })

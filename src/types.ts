@@ -49,4 +49,8 @@ export interface DatasetStats {
   projectCount: number
   billableHours: number
   lateCancellationCount: number
+  activeDurationHours: number
+  cancelledOnTimeDurationHours: number
+  cancelledLateDurationHours: number
+  lateCancellationCoveragePercentage: number
 }
