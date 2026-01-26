@@ -11,6 +11,7 @@ type SummaryAccumulator = {
   cancelledLateCount: number
   cancelledOnTimeMinutes: number
   cancelledLateMinutes: number
+  cancelledLateBillableMinutes: number
   organizerSet: Set<string>
 }
 
@@ -29,6 +30,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
         cancelledLateCount: 0,
         cancelledOnTimeMinutes: 0,
         cancelledLateMinutes: 0,
+        cancelledLateBillableMinutes: 0,
         organizerSet: new Set<string>(),
       })
     }
@@ -47,6 +49,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
       case 'CANCELLED_LATE':
         summary.cancelledLateCount += 1
         summary.cancelledLateMinutes += event.durationMinutes
+        summary.cancelledLateBillableMinutes += event.billableMinutes
         summary.totalMinutes += event.billableMinutes
         break
       case 'CANCELLED_ON_TIME':
@@ -72,6 +75,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
         cancelledLateCount: summary.cancelledLateCount,
         cancelledOnTimeMinutes: summary.cancelledOnTimeMinutes,
         cancelledLateMinutes: summary.cancelledLateMinutes,
+        cancelledLateBillableMinutes: summary.cancelledLateBillableMinutes,
         organizers,
       }
     })
@@ -80,12 +84,47 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
 
 export function buildDatasetStats(events: Occurrence[], summaries: ProjectSummary[]): DatasetStats {
   const billableMinutes = summaries.reduce((acc, item) => acc + item.totalMinutes, 0)
-  const lateCancellationCount = events.filter((evt) => evt.classification === 'CANCELLED_LATE').length
+  
+  // Calculate duration metrics per event type in a single pass
+  let activeMinutes = 0
+  let cancelledOnTimeMinutes = 0
+  let cancelledLateMinutes = 0
+  let lateCancelledBillableMinutes = 0
+  let lateCancellationCount = 0
+  
+  events.forEach((evt) => {
+    switch (evt.classification) {
+      case 'ACTIVE':
+        activeMinutes += evt.durationMinutes
+        break
+      case 'CANCELLED_ON_TIME':
+        cancelledOnTimeMinutes += evt.durationMinutes
+        break
+      case 'CANCELLED_LATE':
+        cancelledLateMinutes += evt.durationMinutes
+        lateCancelledBillableMinutes += evt.billableMinutes
+        lateCancellationCount += 1
+        break
+    }
+  })
+  
+  // Calculate late cancellation coverage percentage
+  // This is the percentage of late cancellation duration that was NOT billed
+  // Late cancellations are typically billed, so the "coverage" is how much was forgiven
+  const lateCancellationNotBilledMinutes = cancelledLateMinutes - lateCancelledBillableMinutes
+  const lateCancellationCoveragePercentage = 
+    cancelledLateMinutes > 0 
+      ? +(lateCancellationNotBilledMinutes / cancelledLateMinutes * 100).toFixed(2)
+      : 0
 
   return {
     eventCount: events.length,
     projectCount: summaries.length,
     billableHours: +(billableMinutes / 60).toFixed(2),
     lateCancellationCount,
+    activeDurationHours: +(activeMinutes / 60).toFixed(2),
+    cancelledOnTimeDurationHours: +(cancelledOnTimeMinutes / 60).toFixed(2),
+    cancelledLateDurationHours: +(cancelledLateMinutes / 60).toFixed(2),
+    lateCancellationCoveragePercentage,
   }
 }

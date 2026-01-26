@@ -685,6 +685,10 @@ function renderStats() {
       projectCount: 0,
       billableHours: 0,
       lateCancellationCount: 0,
+      activeDurationHours: 0,
+      cancelledOnTimeDurationHours: 0,
+      cancelledLateDurationHours: 0,
+      lateCancellationCoveragePercentage: 0,
     }, null)
     return
   }
@@ -941,6 +945,10 @@ function buildStatCards(stats: DatasetStats, dateSpan: { start: Date; end: Date 
     { label: 'Total events', value: stats.eventCount.toString() },
     { label: 'Projects', value: stats.projectCount.toString() },
     { label: 'Date span', value: formatDateRangeDisplay(dateSpan) },
+    { label: 'Active duration (hours)', value: stats.activeDurationHours.toFixed(2) },
+    { label: 'On-time cancellation duration (hours)', value: stats.cancelledOnTimeDurationHours.toFixed(2) },
+    { label: 'Late cancellation duration (hours)', value: stats.cancelledLateDurationHours.toFixed(2) },
+    { label: 'Late cancellation coverage', value: `${stats.lateCancellationCoveragePercentage.toFixed(2)}%` },
   ]
 
   return items
