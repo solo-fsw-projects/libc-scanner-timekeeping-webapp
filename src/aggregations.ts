@@ -11,6 +11,7 @@ type SummaryAccumulator = {
   cancelledLateCount: number
   cancelledOnTimeMinutes: number
   cancelledLateMinutes: number
+  cancelledLateBillableMinutes: number
   organizerSet: Set<string>
 }
 
@@ -29,6 +30,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
         cancelledLateCount: 0,
         cancelledOnTimeMinutes: 0,
         cancelledLateMinutes: 0,
+        cancelledLateBillableMinutes: 0,
         organizerSet: new Set<string>(),
       })
     }
@@ -47,6 +49,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
       case 'CANCELLED_LATE':
         summary.cancelledLateCount += 1
         summary.cancelledLateMinutes += event.durationMinutes
+        summary.cancelledLateBillableMinutes += event.billableMinutes
         summary.totalMinutes += event.billableMinutes
         break
       case 'CANCELLED_ON_TIME':
@@ -72,6 +75,7 @@ export function buildProjectSummaries(events: Occurrence[]): ProjectSummary[] {
         cancelledLateCount: summary.cancelledLateCount,
         cancelledOnTimeMinutes: summary.cancelledOnTimeMinutes,
         cancelledLateMinutes: summary.cancelledLateMinutes,
+        cancelledLateBillableMinutes: summary.cancelledLateBillableMinutes,
         organizers,
       }
     })

@@ -59,6 +59,7 @@ describe('buildProjectWorkbookSheets', () => {
         cancelledLateCount: 1,
         cancelledOnTimeMinutes: 0,
         cancelledLateMinutes: 60,
+        cancelledLateBillableMinutes: 60,
         organizers: ['alpha@libc.org'],
       },
       {
@@ -72,6 +73,7 @@ describe('buildProjectWorkbookSheets', () => {
         cancelledLateCount: 0,
         cancelledOnTimeMinutes: 0,
         cancelledLateMinutes: 0,
+        cancelledLateBillableMinutes: 0,
         organizers: ['beta@libc.org'],
       },
       {
@@ -85,6 +87,7 @@ describe('buildProjectWorkbookSheets', () => {
         cancelledLateCount: 0,
         cancelledOnTimeMinutes: 30,
         cancelledLateMinutes: 0,
+        cancelledLateBillableMinutes: 0,
         organizers: [],
       },
     ]
@@ -103,6 +106,7 @@ describe('buildProjectWorkbookSheets', () => {
       'On-time cancellation percentage',
       'Late cancellations',
       'Late-cancellation percentage',
+      'Late-cancellation coverage',
       'Billable',
     ])
     expect(sheets[0].data[1]).toEqual([
@@ -116,6 +120,7 @@ describe('buildProjectWorkbookSheets', () => {
       '0.00%',
       1,
       '33.33%',
+      '0.00%', // Late cancellation coverage: 60 minutes late, 60 billed = 0% coverage
       'true',
     ])
     expect(sheets[0].data[4]).toEqual([
@@ -129,6 +134,7 @@ describe('buildProjectWorkbookSheets', () => {
       '11.11%',
       1,
       '22.22%',
+      '0.00%', // Late cancellation coverage
       '—',
     ])
 
@@ -143,6 +149,7 @@ describe('buildProjectWorkbookSheets', () => {
       '0.00%',
       1,
       '25.00%',
+      '0.00%', // Late cancellation coverage
       '—',
     ])
 
@@ -194,6 +201,7 @@ describe('buildProjectWorkbookSheets', () => {
         cancelledLateCount: 0,
         cancelledOnTimeMinutes: 0,
         cancelledLateMinutes: 0,
+        cancelledLateBillableMinutes: 0,
         organizers: [],
       },
     ]
@@ -203,5 +211,72 @@ describe('buildProjectWorkbookSheets', () => {
     expect(sheet.name).toBe('Z')
     expect(sheet.data[1][8]).toBe('0m')
     expect(sheets[0].data[1][2]).toBe('0.00')
+  })
+
+  it('calculates late cancellation coverage percentage correctly', () => {
+    // Test case: Late cancellation with partial forgiveness
+    const summaries: ProjectSummary[] = [
+      {
+        projectCode: 'TEST',
+        totalMinutes: 50,
+        totalHours: 0.83,
+        totalDurationMinutes: 100,
+        totalDurationHours: 1.67,
+        activeCount: 0,
+        cancelledOnTimeCount: 0,
+        cancelledLateCount: 1,
+        cancelledOnTimeMinutes: 0,
+        cancelledLateMinutes: 100, // 100 minutes late cancelled
+        cancelledLateBillableMinutes: 50, // Only 50 billed, 50 forgiven
+        organizers: ['test@libc.org'],
+      },
+    ]
+
+    const events = [
+      makeOccurrence({
+        projectCode: 'TEST',
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 100,
+        billableMinutes: 50,
+      }),
+    ]
+
+    const sheets = buildProjectWorkbookSheets(events, summaries, baseFormatters)
+    
+    // Check that coverage is 50% (50 minutes forgiven out of 100 total)
+    expect(sheets[0].data[1][10]).toBe('50.00%')
+  })
+
+  it('shows 100% coverage when late cancellations are fully forgiven', () => {
+    const summaries: ProjectSummary[] = [
+      {
+        projectCode: 'FORGIVEN',
+        totalMinutes: 0,
+        totalHours: 0,
+        totalDurationMinutes: 120,
+        totalDurationHours: 2,
+        activeCount: 0,
+        cancelledOnTimeCount: 0,
+        cancelledLateCount: 1,
+        cancelledOnTimeMinutes: 0,
+        cancelledLateMinutes: 120,
+        cancelledLateBillableMinutes: 0, // Fully forgiven
+        organizers: [],
+      },
+    ]
+
+    const events = [
+      makeOccurrence({
+        projectCode: 'FORGIVEN',
+        classification: 'CANCELLED_LATE',
+        durationMinutes: 120,
+        billableMinutes: 0,
+      }),
+    ]
+
+    const sheets = buildProjectWorkbookSheets(events, summaries, baseFormatters)
+    
+    // Check that coverage is 100%
+    expect(sheets[0].data[1][10]).toBe('100.00%')
   })
 })

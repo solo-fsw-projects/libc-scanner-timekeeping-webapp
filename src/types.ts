@@ -41,6 +41,7 @@ export interface ProjectSummary {
   cancelledLateCount: number
   cancelledOnTimeMinutes: number
   cancelledLateMinutes: number
+  cancelledLateBillableMinutes: number
   organizers: string[]
 }
 
@@ -52,5 +53,12 @@ export interface DatasetStats {
   activeDurationHours: number
   cancelledOnTimeDurationHours: number
   cancelledLateDurationHours: number
+  /** 
+   * Percentage of late-cancelled time that was NOT billed (forgiven).
+   * Formula: ((lateCancelledMinutes - lateCancelledBillableMinutes) / lateCancelledMinutes) * 100
+   * 
+   * Example: If 100 minutes were late-cancelled and 30 were billed, coverage = 70%
+   * (70% of the late cancellation time was forgiven/covered)
+   */
   lateCancellationCoveragePercentage: number
 }
