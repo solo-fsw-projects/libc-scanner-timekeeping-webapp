@@ -200,7 +200,9 @@ function formatLateCancellationCoverage(lateMinutes: number, lateBillableMinutes
   if (lateMinutes <= 0) {
     return '0.00%'
   }
-  const notBilledMinutes = lateMinutes - lateBillableMinutes
+  // Ensure billable minutes don't exceed total late minutes (defensive programming)
+  const actualBillable = Math.min(lateBillableMinutes, lateMinutes)
+  const notBilledMinutes = lateMinutes - actualBillable
   return `${((notBilledMinutes / lateMinutes) * 100).toFixed(2)}%`
 }
 
