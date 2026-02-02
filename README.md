@@ -3,7 +3,7 @@ A client-side dashboard for MRI scanner administrators to upload Outlook-exporte
 
 Find the website [here](https://solo-fsw-projects.github.io/libc-scanner-timekeeping-webapp/).
 
-Test data can be found in: `J:\departments\fsw\FAC\SOLO\Lab-support\015 GitHub Data\solo-fsw\libc-scanner-timekeeping-webapp.data`.
+Test data can be found in: `J:\departments\fsw\FAC\SOLO\Lab-support\015 Project Data\GitHub\solo-fsw\libc-scanner-timekeeping-webapp`.
 
 ## Tech Stack
 - [Vite](https://vitejs.dev/) + TypeScript
