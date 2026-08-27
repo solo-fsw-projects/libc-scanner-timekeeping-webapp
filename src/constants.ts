@@ -1,7 +1,7 @@
 // This section contains constants used in the timekeeping logic.
 
 // Application version:
-export const APP_VERSION = '0.2.0'
+export const APP_VERSION = '0.2.1'
 
 // Regular expression to extract project codes enclosed in square brackets:
 export const PROJECT_CODE_REGEX = /\[([0-9a-zA-Z]+)\]/
